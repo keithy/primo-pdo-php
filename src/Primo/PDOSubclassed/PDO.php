@@ -2,12 +2,16 @@
 
 namespace Primo\PDOSubclassed;
 
-class PDO extends \PDO {
+use Primo\PDOLog\Logs;
 
-    protected $log = false;
+class PDO extends \PDO
+{
+
+    protected $logs = true; // default stderr
     public $helper;
 
-    static function helperFor($adapter) {
+    static function helperFor($adapter)
+    {
         $helperClass = "\\Primo\\DBHelpers\\Helper_{$adapter}";
         if (!class_exists($helperClass)) {
             throw new \PDOException("adapter '{$adapter}' invalid or not yet supported by Primo-PDO");
@@ -15,7 +19,8 @@ class PDO extends \PDO {
         return new $helperClass();
     }
 
-    function defaultOptions() {
+    function defaultOptions()
+    {
         return [
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
@@ -24,7 +29,8 @@ class PDO extends \PDO {
         ];
     }
 
-    function __construct($config, $options = []) {
+    function __construct($config, $options = [])
+    {
 
         // 'database' (in config or options) overrides 'name'
         $config['database'] = $config['database'] ?? $options['database'] ?? $config['name'];
@@ -39,37 +45,42 @@ class PDO extends \PDO {
         $options = array_replace($this->defaultOptions(), $options);
 
         parent::__construct($dsn, $username, $password, $options);
+
+        if (true == $this->logs) $this->logAdd();
     }
 
-    // Return reference to the logging variable
-    function &getLog() {
-        return $this->log;
+    function getLogs()
+    {
+        return $this->logs;
     }
 
-    // , optionally set it.
-    // $this->log starts as false (no logging)
-    // logOn() enables log falling through to set $this->log to [].
-    // logOn($myLog) replaces $this->log with reference to an externally provided array.    
-    // logOff() resets logging to false
-    function logOn(& $log = []) {
-        $this->log = & $log;
+    function logAdd($log = null)
+    {
+        $this->logs = $log ?? new Logs();
+
+        $this->logs->logAdd($log);
         return $this;
     }
 
-    function logOff() {
-        $this->log = false;
+    function logOff()
+    {
+        $this->logs = null;
         return $this;
     }
 
-    function run($sql = null, ...$args) {
+    function run($sql = null, ...$args)
+    {
         if ($sql === null) return $this;
 
         if (empty($args)) {
             return $this->query($sql);
         }
 
-        $stmt = $this->prepare($sql);
-
+        try {
+            $stmt = $this->prepare($sql);
+        } finally {
+            $stmt ?? error_log("PREPARE FAILED: $sql");
+        }
         // handle ("sql with ?", val)
         // handle ("sql with ?", [val])
         // handle ("sql with :name", [':name' => 'val'])
@@ -81,18 +92,24 @@ class PDO extends \PDO {
         return $stmt;
     }
 
-    function query($sql) {
+    function query($sql)
+    {
+        try {
+            $start = microtime(true);
+            $result = parent::query($sql);
+        } finally {
 
-        $start = microtime(true);
+            if (isset($this->logs)) {
 
-        $result = parent::query($sql);
-
-        if (false !== $this->log) array_push($this->log, [$sql, ($result !== false), microtime(true) - $start]);
-  
+                $ms = microtime(true) - $start;
+                $this->logs->logThis($sql, $ms, $result !== false);
+            }
+        }
         return $result;
     }
 
-    function columnsOfTable($tableName) {
+    function columnsOfTable($tableName)
+    {
         return $this->helper->columnsOfTable($this, $tableName);
     }
 

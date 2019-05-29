@@ -25,12 +25,27 @@ Third Goal: Logging as standard
  
  (have suggested this improvement to phinx)
  
-2. We may hold a shared array per pdo instance for logging stuff (optional)
- 
+2. Logging is built in (Zero overhead if not enabled) 
+
+We hold an "array" per pdo instance for logging stuff
+
+ An array is used as a default because it is "the simplest thing that could possibly work". 
+ This "array" defaults to false, to disable logging altogether. 
+ This array may be accessed and shared by reference, in order share a single log among pdo instances.
+ This array is shared with all PDOStatements returned by PDO.
+ This "array" may be replaced by a PDOLog (or subclass) instance for all other logging options!
+ ```
+ usage:
+  $log = [];
+  $pdo = new PDO( $aPhinxEnvironment )->logOn( $log );
+  $pdo2 = new PDO( $aPhinxEnvironment )->logOn( $log );
+ ```
+
 3. Super-duper unified interface to queries and prepared statements via the run() method. 
-   (with added splat operator goodness.)
+   (With added splat operator goodness.)
 
  ```
+ #simple query
  $pdo->run("SELECT name FROM pragma_table_info( '{$table}' )")->fetchAllAsColumn();
  
  #prepared statements
@@ -39,17 +54,17 @@ Third Goal: Logging as standard
  $pdo->run("SELECT * FROM {$table} WHERE id = :id OR name = :name", [ 'id' => $id, 'name' => $name ] );
  ```
  
-4. Queries are reconstructed from the bound variables for readable logging
+4. If logging is enabled, queries are reconstructed from the bound variables
  
 5. Choice of specialized `PDOStatement` as a subclass or wrapper.
    The subclass variant doesn't support persistent connections.
 
 6. Bespoke option 'database' obtains a connection to an alternative database (e.g. a backup)
-   using the same credentials given in the phinx environment. This also enables an override for 
+   using the same credentials given in the given phinx environment. This also enables an override for 
    a no-database connection i.e. 
 
  ```
-  $pdo = new PDO( $aConfigEnvironment, ['database' => "" ]); // prefer no-database
+  $pdo = new PDO( $aConfigEnvironment, ['database' => "" ]); // override, preferring no-database
  ```
 
 7. DBHelpers for ironing out differences between databases
