@@ -6,8 +6,8 @@ use Primo\PDOLog\Logs;
 
 class PDO extends \PDO
 {
-
-    protected $logs = true; // default stderr
+    const logs = true;
+    protected $logs; // default stderr
     public $helper;
 
     static function helperFor($adapter)
@@ -44,9 +44,10 @@ class PDO extends \PDO
 
         $options = array_replace($this->defaultOptions(), $options);
 
+        if (static::logs) $this->logAdd();
+        
         parent::__construct($dsn, $username, $password, $options);
 
-        if (true == $this->logs) $this->logAdd();
     }
 
     function getLogs()
@@ -56,8 +57,7 @@ class PDO extends \PDO
 
     function logAdd($log = null)
     {
-        $this->logs = $log ?? new Logs();
-
+        $this->logs ?? $this->logs = new Logs();
         $this->logs->logAdd($log);
         return $this;
     }

@@ -12,17 +12,17 @@ class Logs
 
     function logAdd($log = null) // default $this log to stderr
     {
-        $logs[] = $log ?? $this;
+        $this->logs[] = $log ?? $this;
     }
 
     function logThis($sql, $ms, $result = false)
     {
         foreach ($this->logs as $log) {
-            $log->pdoLog(sql, $ms, $result);
+            $log->pdoLog($sql, $ms, $result);
         }
     }
 
-    function pdoLog($sql, $result, $ms)
+    function pdoLog($sql, $ms, $result)
     {
         error_log(sprintf("%4.2fms: %s", $ms, $sql));
     }
