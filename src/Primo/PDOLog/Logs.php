@@ -1,7 +1,7 @@
 <?php
-
-// Anticipated Usage
-// Subclass this and add the trait that adapts it to your logging framework of choice
+ 
+// Usage: just add your callbacks
+// $pdo->addLog( function( $sql, $ms, $result) { ... }; );
 
 namespace Primo\PDOLog;
 
@@ -12,19 +12,18 @@ class Logs
 
     function logAdd($log = null) // default $this log to stderr
     {
-        $this->logs[] = $log ?? $this;
+        $this->logs[] = isset($log) ? $log : $this;
     }
 
     function logThis($sql, $ms, $result = false)
     {
         foreach ($this->logs as $log) {
-            $log->pdoLog($sql, $ms, $result);
+            $log($sql, $ms, $result);
         }
     }
 
-    function pdoLog($sql, $ms, $result)
+    function __invoke($sql, $ms, $result)
     {
         error_log(sprintf("%4.2fms: %s", $ms, $sql));
     }
-
 }

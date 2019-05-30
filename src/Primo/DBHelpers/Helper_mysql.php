@@ -6,8 +6,8 @@ class Helper_sqlite {
 
     function dsn($config) {
 
-        $dsn = 'mysql:host=' . $config['host'] . ';port=' . ($config['port'] ?? 3306);
-        $dsn .= ';charset=' . ($config['charset'] ?? 'utf8');
+        $dsn = 'mysql:host=' . $config['host'] . ';port=' . (isset($config['port']) ? $config['port'] : 3306);
+        $dsn .= ';charset=' . (isset($config['charset']) ? $config['charset'] : 'utf8');
         if ('' !== $config['database']) $dsn .= ';dbname=' . $config['database'];
 
         return $dsn;

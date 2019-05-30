@@ -1,3 +1,9 @@
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE.md)
+[![Build Status](https://travis-ci.org/keithy/primo-pdo-php.svg?branch=master)](https://travis-ci.org/keithy/primo-pdo-php)
+[![GitHub issues](https://img.shields.io/github/issues/keithy/primo-pdo-php.svg)](https://github.com/keithy/primo-pdo-php/issues)
+[![Latest Version](https://img.shields.io/github/release/keithy/primo-pdo-php.svg)](https://github.com/keithy/primo-pdo-php/releases)
+[![PHP from Travis config](https://img.shields.io/travis/php-v/keithy/primo-pdo-php.svg)](https://travis-ci.org/keithy/primo-pdo-php)
+
 ## primo-pdo-php
 
 Primary Goal: to provide a PDO interface that can use Sqlite and Mysql interchangeably
@@ -27,18 +33,13 @@ Third Goal: Logging as standard
  
 2. Logging is built in (Zero overhead if not enabled) 
 
-We hold an "array" per pdo instance for logging stuff
+ The default callback writes the re-constructed SQL to error_log.
 
- An array is used as a default because it is "the simplest thing that could possibly work". 
- This "array" defaults to false, to disable logging altogether. 
- This array may be accessed and shared by reference, in order share a single log among pdo instances.
- This array is shared with all PDOStatements returned by PDO.
- This "array" may be replaced by a PDOLog (or subclass) instance for all other logging options!
+Register additional callbacks as you wish.
  ```
  usage:
-  $log = [];
-  $pdo = new PDO( $aPhinxEnvironment )->logOn( $log );
-  $pdo2 = new PDO( $aPhinxEnvironment )->logOn( $log );
+  $pdo = new PDO( $aPhinxEnvironment )->logOff();
+  $pdo2 = new PDO( $aPhinxEnvironment )->logOn( fn($sql) => error_log($sql) );
  ```
 
 3. Super-duper unified interface to queries and prepared statements via the run() method. 

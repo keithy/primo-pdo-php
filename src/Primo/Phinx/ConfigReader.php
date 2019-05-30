@@ -20,7 +20,7 @@ class ConfigReader
     {
         $reader = new static($path);
 
-        $choice = $choice ?? $reader->default();
+        $choice = isset($choice) ? $choice : $reader->defaultEnvironment();
 
         return $reader->choose($choice);
     }
@@ -30,14 +30,14 @@ class ConfigReader
         $this->data = require($path);
     }
 
-    function default()
+    function defaultEnvironment()
     {
         return $this->data['environments']['default_database'];
     }
 
     function choose($choice)
     {
-        $environment = $this->data['environments'][$choice] ?? null;
+        $environment = isset($this->data['environments'][$choice]) ? $this->data['environments'][$choice] : null;
         if (null === $environment) throw new DbEnvironmentNotFound();
         
         return $this->applyDefaults($environment, $choice);
@@ -47,7 +47,7 @@ class ConfigReader
     
     function applyDefaults($config, $choice)
     {
-        $path = $this->data['paths']['defaults'] ?? "";
+        $path = isset($this->data['paths']['defaults']) ? $this->data['paths']['defaults'] : "";
         $defaults = file_exists($path) ? require($path) : [];
 
         $config = array_replace($defaults, $config);

@@ -6,7 +6,9 @@ use Primo\PDOLog\Logs;
 
 class PDO extends \PDO
 {
+
     const logs = true;
+
     protected $logs; // default stderr
     public $helper;
 
@@ -33,21 +35,24 @@ class PDO extends \PDO
     {
 
         // 'database' (in config or options) overrides 'name'
-        $config['database'] = $config['database'] ?? $options['database'] ?? $config['name'];
+
+        if (!isset($config['database'])) {
+            if (isset($options['database'])) $config['database'] = $options['database'];
+            else $config['database'] = $config['name'];
+        }
 
         // fix dsn!
         $this->helper = static::helperFor($config['adapter']);
         $dsn = $this->helper->dsn($config);
 
-        $username = $username ?? $config['user'] ?? trim(get_file_contents($config['user_file']));
-        $password = $password ?? $config['pass'] ?? trim(get_file_contents($config['pass_file']));
+        $username = isset($config['user']) ? $config['user'] : trim(get_file_contents($config['user_file']));
+        $password = isset($config['pass']) ? $config['pass'] : trim(get_file_contents($config['pass_file']));
 
         $options = array_replace($this->defaultOptions(), $options);
 
         if (static::logs) $this->logAdd();
-        
-        parent::__construct($dsn, $username, $password, $options);
 
+        parent::__construct($dsn, $username, $password, $options);
     }
 
     function getLogs()
@@ -57,7 +62,7 @@ class PDO extends \PDO
 
     function logAdd($log = null)
     {
-        $this->logs ?? $this->logs = new Logs();
+        if (!isset($this->logs)) $this->logs = new Logs();
         $this->logs->logAdd($log);
         return $this;
     }
@@ -79,7 +84,7 @@ class PDO extends \PDO
         try {
             $stmt = $this->prepare($sql);
         } finally {
-            $stmt ?? error_log("PREPARE FAILED: $sql");
+            if (!isset($stmt)) error_log("PREPARE FAILED: $sql");
         }
         // handle ("sql with ?", val)
         // handle ("sql with ?", [val])
@@ -100,8 +105,8 @@ class PDO extends \PDO
         } finally {
 
             if (isset($this->logs)) {
-
                 $ms = microtime(true) - $start;
+                $result = isset($result) ? $result : false;
                 $this->logs->logThis($sql, $ms, $result !== false);
             }
         }

@@ -21,7 +21,12 @@ class PDOStatement extends \PDOStatement
         } finally {
 
             if (isset($this->logs)) {
-                $this->logThis($start, $this->queryString(), $params ?? $this->bindings, $result);
+                $this->logThis(
+                        $start,
+                        $this->queryString(),
+                        (isset($params) ? $params : $this->bindings),
+                        (isset($result) ? $result : false)
+                );
             }
         }
         return $result;
@@ -38,7 +43,7 @@ class PDOStatement extends \PDOStatement
             $sql = preg_replace("/\?|$param(?![a-zA-Z_])/", $value, $sql, 1);
         }
         $ms = 1000 * (microtime(true) - $start);
-        
+
         $this->logs->logThis($sql, $ms, $result);
     }
 
@@ -72,12 +77,9 @@ class PDOStatement extends \PDOStatement
         return $this;
     }
 
-    function as($classRef, ...$args)
+    function asObjects($classRef, ...$args)
     {
-        if (!$this->setFetchMode(\PDO::FETCH_CLASS, $classRef, ...$args)) {
-            throw new \PDO\Exception('setFetchMode($classRef) failed');
-        }
-        return $this;
+        return $this->mode( \PDO::FETCH_CLASS, $classRef, ...$args);
     }
 
     function quote($value)

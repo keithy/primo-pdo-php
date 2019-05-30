@@ -68,7 +68,7 @@ namespace {
         if (!defined('BR')) define('BR', PHP_EOL);
         if (!defined('KOUTPUT')) define('KOUTPUT', 'text/plain');
     } else { // web runner
-        if (strpos($_SERVER['DEV_ALLOWED'], ".okaying.") == false) {
+        if (strpos($_SERVER['DEV_ALLOWED'], ".okay.") == false) {
             echo "Testing not authorised";
             exit;
         }
@@ -76,16 +76,26 @@ namespace {
         header("Content-Type: ");
         if (!defined('KOUTPUT')) define('KOUTPUT', 'text/plain');
     }
+    
+    function ok($format)
+    { // php<5.6
+        $args = func_get_args(); // php<5.6
+        $args[0] = ok\okay()->indent() . "     " . $format . BR;
+        call_user_func_array('ok\printf', $args);
+    }
+
 }
 
 namespace ok {
 
     // ok\DEBUG() && ok\printf("Debug only Output".BR);
-    function DEBUG() {
+    function DEBUG()
+    {
         return in_array('-D', $_SERVER['argv']) || filter_input(INPUT_GET, 'debug', FILTER_VALIDATE_BOOLEAN);
     }
 
-    function include_if_present($file) {
+    function include_if_present($file)
+    {
         if (file_exists($file)) {
             include($file);
             return true;
@@ -94,21 +104,24 @@ namespace ok {
     }
 
     // useful for wiping out file fixtures in a directory
-    function delete_all_matching($in, $match = '*') {
+    function delete_all_matching($in, $match = '*')
+    {
         assert($in !== '');
         assert($in !== '/');
         array_map('unlink', glob("{$in}/{$match}"));
     }
 
     // useful for repopulating file fixtures into a directory
-    function copy_all($from, $to, $match = '*') {
+    function copy_all($from, $to, $match = '*')
+    {
         foreach (glob("{$from}/{$match}") as $path) {
             copy($path, $to . '/' . basename($path));
         }
     }
 
     // A templating framework in a single function!
-    function lookup_and_include($name, $dir, $includes = '_includes') {
+    function lookup_and_include($name, $dir, $includes = '_includes')
+    {
         $target = "{$dir}/{$includes}/{$name}.inc";
         if (file_exists($target)) {
             return include $target;
@@ -120,65 +133,79 @@ namespace ok {
         return false;
     }
 
-    function okay($runner = null) {
+    function okay($runner = null)
+    {
         static $okay;
         if (null !== $runner) $okay = $runner;
         return $okay;
     }
 
+// vocabulary
+
+    function _()
+    {
+        $msg = implode(' ', func_get_args());
+        printf(okay()->indent() . "      {$msg}" . BR);
+        return okay();
+    }
+
+    function __()
+    {
+        $msg = implode(' ', func_get_args());
+        printf( okay()->indent() . "%2d) " . $msg . BR, ++okay()->count_expectations);
+        return okay();
+    }
+    
+    function given($path)
+    {
+        $given = substr($path, strlen(__DIR__));
+        $given = str_replace(array('.inc', '.php', '/', '/_'), array('', '', ' ', ' '), $given);
+        printf(BR . "<div class='test'><em>%sGiven$given</em><br><div class = 'output'>" . BR, okay()->indent());
+    }
+    
     // $okay = ok\expect("expectation...")
-    function expect($message) {
-        ++okay()->count_expectations;
-        printf(okay()->indent() . "Expect $message" . BR, okay()->count_expectations);
-        return okay();
+    function expect($message)
+    {
+        return __("Expect", $message);
     }
 
-    function to($message) {
-        return word("to", $message);
+    function to($message)
+    {
+        return _("to", $message);
     }
 
-    function should($message) {
-        return word("should", $message);
-    }
-
-    function word($word, $message) {
-        printf(okay()->indent() . "  $word $message" . BR);
-        return okay();
+    function should($message)
+    {
+        return _("should", $message);
     }
 
     /*
      * If code under test may have an endless loop, this utility comes in handy
      * ok\die_after(5);
      */
-
-    function die_after($over = 99) {//calls
+    function die_after($over = 99)
+    {//calls
         static $the_edge = 0;
         if ($over < $the_edge++) die;
     }
 
-    function isCLI() {
+    function isCLI()
+    {
         return (php_sapi_name() == 'cli' || KOUTPUT == 'plain/text');
     }
 
     // function printf($format, ...$args) { // php>=5.6
     // \printf(isCLI() ? strip_tags($format) : $format, ... $args); }
 
-    function printf($format) { // php<5.6
+    function printf($format)
+    { // php<5.6
         $args = func_get_args();
         $args[0] = isCLI() ? strip_tags($format) : $format;
         call_user_func_array('\printf', $args);
     }
 
-    // function writeln($format, ...$args) { // php>=5.6
-    // printf(okay()->indent() . "  " . $format . BR, ... $args); }
-
-    function writeln($format) { // php<5.6
-        $args = func_get_args(); // php<5.6
-        $args[0] = okay()->indent() . "  " . $format . BR;
-        call_user_func_array('ok\printf', $args);
-    }
-
-    function asserts($on) {
+    function asserts($on)
+    {
 
         if (version_compare(PHP_VERSION, '5.4.0') < 0) {
             assert_options(ASSERT_WARNING, $on);
@@ -193,7 +220,8 @@ namespace ok {
         }
     }
 
-    class Okay {
+    class Okay
+    {
 
         const VERSION = "0.8";
 
@@ -201,35 +229,34 @@ namespace ok {
         public $count_files;
         public $count_expectations;
         public $count_failed_assertions = 0;
-        public $count_errors = 0;
-        public $count_exceptions = 0;
-        public $count_total_fails = 0;
         public $previous_error_handler;
         public $previous_exception_handler;
         public $indent = 0;
 
-        static function initializeRequested() {
+        static function initializeRequested()
+        {
             return in_array('-I', $_SERVER['argv']) || (isset($_GET['INIT']));
         }
 
-        function indent($n = 0) {
+        function indent($n = 0)
+        {
             static $i;
             return str_repeat(' ', ($i = $i + $n));
         }
 
-        function perform($dir, $method) {
+        function perform($dir, $method)
+        {
             $file = $dir . "/{$method}";
             include_if_present($file) && DEBUG() && printf("<div class='{$method}'>performed: $file</div>" . BR);
         }
 
-        function test($path) {
+        function test($path)
+        {
             $this->assertion_fail_count = 0;
 
             $result = null; // if error occurred
 
-            $given = substr($path, strlen(__DIR__));
-            $given = str_replace(array('.inc', '.php', '/', '/_'), array('', '', ' ', ' '), $given);
-            printf("<div class='test'><em>%sGiven$given</em><br><div class = 'output'>" . BR, $this->indent());
+            given( $path );
 
             $start = microtime(true);
 
@@ -244,22 +271,24 @@ namespace ok {
             return $ms;
         }
 
-        function performTest($path) {
+        function performTest($path)
+        {
             global $okaying;
 
             $this->count_files++;
 
-            $this->indent(+2);
+            //$this->indent(+2);
             $okaying = true;
             $result = include($path);
             $okaying = false;
-            $this->indent(-2);
+            //$this->indent(-2);
 
             return $result;
         }
 
         // function protect($callable, ...$args) { // php>=5.6
-        function protect($callable) { // php<5.6
+        function protect($callable)
+        { // php<5.6
             if (version_compare(PHP_VERSION, '5.4.0') < 0) {
                 $this->previous_error_handler = set_error_handler(array($this, "error_handler"), E_WARNING);
             } else assert_options(ASSERT_WARNING, 0);
@@ -277,7 +306,8 @@ namespace ok {
             return $result;
         }
 
-        function run($dir) {
+        function run($dir)
+        {
             okay($this);
             if (static::initializeRequested()) $this->perform('initialize');
 
@@ -289,9 +319,9 @@ namespace ok {
 
                 if (substr($path, -3) == 'php') $this->run(dirname($path));
                 else if (is_dir($path)) {
-                    $this->indent(+2);
+                    //$this->indent(+2);
                     $this->run($path);
-                    $this->indent(-2);
+                    //$this->indent(-2);
                 } else $this->test($path);
 
                 $this->perform($dir, '_teardown.php');
@@ -305,12 +335,13 @@ namespace ok {
         }
 
         //// We catch warnings - compatible with php5.3+
-        function error_handler($level, $msg, $file, $line) {
+        function error_handler($level, $msg, $file, $line)
+        {
             if ($level == 2 && (substr($msg, 0, 8) == 'assert()')) { // Handling Warning - php<5.4
                 if (version_compare(PHP_VERSION, '5.4.0') < 0) {
                     ++$this->count_failed_assertions;
                     $msg = substr($msg, 10, strlen($msg) - 10);
-                    printf("<em style = 'assertion-failed'>%s  FAILED(%s):</em> %s" . BR, $this->indent(), $line, $msg);
+                    printf("<em style = 'assertion-failed'>%s   FAILED(%s):</em> %s" . BR, $this->indent(), $line, $msg);
                 }
             }
             if ($this->previous_error_handler == null) return null;
@@ -318,7 +349,8 @@ namespace ok {
             return $handler($level, $msg, $file, $line);
         }
 
-        function exception_handler($ex) {
+        function exception_handler($ex)
+        {
 
             if ($this->previous_exception_handler == null) {
                 print_r($ex->getTraceAsString());
@@ -327,10 +359,11 @@ namespace ok {
             return $this->previous_exception_handler($ex);
         }
 
-        function on_assertion_failure($file, $line, $code, $msg) {
+        function on_assertion_failure($file, $line, $code, $msg)
+        {
             if (version_compare(PHP_VERSION, '5.4.0') >= 0) { // Handling Callback php>=5.4
                 ++$this->count_failed_assertions;
-                printf("<em style = 'assertion-failed'>%s  FAILED(%s):</em> %s" . BR, $this->indent(), $line, $msg);
+                printf("<em style = 'assertion-failed'>%2d} %sFAILED(%s):</em> %s" . BR, $this->count_expectations, $this->indent(), $line, $msg);
             }
         }
 
@@ -351,6 +384,7 @@ namespace ok {
     $count_files = $okay->count_files;
     $count_expectations = $okay->count_expectations;
     $count_failed_assertions = $okay->count_failed_assertions;
+    
     $failedMsg = ($count_failed_assertions > 0) ? "failed {$count_failed_assertions} assertions" : "OK";
     if (isCLI())
             printf("Ran %d files (%d expectations) %s" . BR, $count_files, $count_expectations, $failedMsg);
