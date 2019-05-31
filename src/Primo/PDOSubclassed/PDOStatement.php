@@ -71,15 +71,14 @@ class PDOStatement extends \PDOStatement
 
     function mode(...$args)
     {
-        if (!$this->setFetchMode(...$args)) {
-            throw new \PDO\Exception('setFetchMode() failed');
-        }
+        if (!$this->setFetchMode(...$args)) throw new \PDO\Exception('setFetchMode() failed');
+
         return $this;
     }
 
     function asObjects($classRef, ...$args)
     {
-        return $this->mode( \PDO::FETCH_CLASS, $classRef, ...$args);
+        return $this->mode(\PDO::FETCH_CLASS, $classRef, $args);
     }
 
     function quote($value)
@@ -90,9 +89,9 @@ class PDOStatement extends \PDOStatement
         return str_replace($search, $replace, $value);
     }
 
-    function fetchAllAsObjects($class_name = null, $ctor_args = null)
+    function fetchAllAsObjects($class_name = null, $ctor_args_array = null)
     {
-        return $this->fetchAll(\PDO::FETCH_CLASS, $class_name, $ctor_args);
+        return $this->fetchAll(\PDO::FETCH_CLASS, $class_name, $ctor_args_array);
     }
 
     function fetchAllAsColumn($n = 0)
