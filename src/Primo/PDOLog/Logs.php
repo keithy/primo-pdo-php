@@ -1,5 +1,5 @@
 <?php
- 
+
 // Usage: just add your callbacks
 // $pdo->addLog( function( $sql, $ms, $result) { ... }; );
 
@@ -7,23 +7,35 @@ namespace Primo\PDOLog;
 
 class Logs
 {
-
     protected $logs = [];
+    public $tag;
 
-    function logAdd($log = null) // default $this log to stderr
+    function __construct($tag = 'PDO')
     {
-        $this->logs[] = isset($log) ? $log : $this;
+        $this->tag = $tag;
     }
 
-    function logThis($sql, $ms, $result = false)
+    function add($log) // default $this log to stderr
     {
+        $this->logs[] = $log;
+    }
+
+    function logThis($message, $tag = null, $ms = null, $result = true)
+    {
+        //**/$i = 1;
         foreach ($this->logs as $log) {
-            $log($sql, $ms, $result);
+            //**/echo $i++, ": {$message}\n";
+            $log($message, $tag, $ms, $result);
         }
     }
 
-    function __invoke($sql, $ms, $result)
+    function __invoke($message, $tag, $ms, $result)
     {
-        error_log(sprintf("%4.2fms: %s", $ms, $sql));
+        $tag = isset($tag) ? $tag : $this->tag;
+
+        if (null === $ms) $line = "[{$tag}] {$message}";
+        else $line = sprintf("[%s] %4.2fms: %s%s", $tag, $ms, $message, ($result ? '' : '[FAILED]'));
+
+        error_log($line);
     }
 }

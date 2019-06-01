@@ -6,55 +6,78 @@
 
 ## primo-pdo-php
 
-Primary Goal: to provide a PDO interface that can use Sqlite and Mysql interchangeably
-in order that unit/acceptance testing can be made against fast file-based SQLite fixtures.
+### Primary Goal:
 
-To achieve this Phinx is used to provide migrations and data seeding for fixtures and upgrades.
+*provide a PDO interface that can use Sqlite and Mysql interchangeably 
+in order that specs/unit-tests/acceptance-tests can be made against fast file-based SQLite fixtures.*
+
+Phinx is used to provide migrations and data seeding for fixtures and upgrades.
 PDO instanciation uses a Phinx compatible environment configuration rather than the usual "dsn".
 
-Secondary Goal: Include the best and most concise features of other similar libraries.
+### Secondary Goal: 
 
-Third Goal: Logging as standard
+*Include the best and most concise features of other similar libraries.*
 
-### Features
+Collate all the best knowledge available (i.e. https://phpdelusions.net/pdo )
 
-1. Unified interface to the DSN string
+### Third Goal: 
 
- To improve consistency between different databases and phinx
- we accept a config array instead.
+Logging as standard, to multiple targets, with sensible defaults and no-overhead if disabled,
 
- The array provides 'adapter' 'host' 'name', 'charset', 'user' & 'pass'
- similar to phinx environments. 
+## Features
+
+### Unified interface to the DSN string
+
+To improve consistency between different databases and phinx
+we accept a config array instead.
+
+The array provides 'adapter' 'host' 'name', 'charset', 'user' & 'pass'
+similar to phinx environments. 
+
+Usefully where secrets are in a file (i.e. docker secrets)
+we also accept 'user_file' and 'pass_file'.
+
+(have suggested this improvement to phinx)
  
- Usefully where secrets are in a file (i.e. docker secrets)
- we also accept 'user_file' and 'pass_file'.
- 
- (have suggested this improvement to phinx)
- 
-2. Logging is built in (Zero overhead if not enabled) 
+### Logging is built in (zero overhead if not enabled) 
 
- The default callback writes the re-constructed SQL to error_log.
+The default callback writes the re-constructed SQL to error_log.
 
-Register additional callbacks as you wish.
+Can be enabled/disabled in the config, universally (top level), or per environment.
+```
+logging = false
+```
+Can be set to a callable class in the config.
+```
+logging = "\Primo\PDOLog\Logs"
+```
+
+Register additional callbacks at runtime as you wish.
  ```
  usage:
-  $pdo = new PDO( $aPhinxEnvironment )->logOff();
-  $pdo2 = new PDO( $aPhinxEnvironment )->logOn( fn($sql) => error_log($sql) );
+  $pdo = new PDO( $aPhinxEnvironment )->addLog(false); // disables logging
+  $pdo2 = new PDO( $aPhinxEnvironment )->addLog( fn($sql) => error_log($sql) );
  ```
 
-3. Super-duper unified interface to queries and prepared statements via the run() method. 
-   (With added splat operator goodness.)
+### Super-duper unified interface to queries and prepared statements
 
- ```
- #simple query
- $pdo->run("SELECT name FROM pragma_table_info( '{$table}' )")->fetchAllAsColumn();
- 
- #prepared statements
- $pdo->run("SELECT * FROM {$table} WHERE id = ? OR name = ?", $id, $name);
- $pdo->run("SELECT * FROM {$table} WHERE id = :id OR name = :name", [ ':id' => $id, ':name' => $name ] );
- $pdo->run("SELECT * FROM {$table} WHERE id = :id OR name = :name", [ 'id' => $id, 'name' => $name ] );
- ```
- 
+*via the `run()` method - with added splat operator goodness!*
+
+#### Prepared statements can't get any easier than this!
+
+```
+$pdo->run("SELECT * FROM {$table} WHERE id = ? OR name = ?", $id, $name);
+```
+
+```
+#simple query
+$pdo->run("SELECT name FROM pragma_table_info( '{$table}' )")->fetchAllAsColumn();
+
+#prepared statement with named parameters
+$pdo->run("SELECT * FROM {$table} WHERE id = :id OR name = :name", [ ':id' => $id, ':name' => $name ] );
+$pdo->run("SELECT * FROM {$table} WHERE id = :id OR name = :name", [ 'id' => $id, 'name' => $name ] );
+```
+
 4. If logging is enabled, queries are reconstructed from the bound variables
  
 5. Choice of specialized `PDOStatement` as a subclass or wrapper.

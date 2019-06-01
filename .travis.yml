@@ -1,4 +1,4 @@
 language: php
 php: [7.3,5.6]
 before_script: composer update
-script: php "okay/_okay.php"
+script: php "okay/_okay.php" -I

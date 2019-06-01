@@ -2,23 +2,57 @@
 
 namespace Primo\PDOSubclassed;
 
-use Primo\PDOLog\Logs;
+use Primo\PDOLog\LogsTrait;
 
 class PDO extends \PDO
 {
-
-    const logs = true;
-
-    protected $logs; // default stderr
+    use LogsTrait;
     public $helper;
 
-    static function helperFor($adapter)
+    static function helperFor($env)
+    {   // just keep one helper instance around for all pdos
+        static $helpers = [];
+
+        $key = $env['helper'];
+
+        if (!isset($helpers[$key])) $helpers[$key] = static::newHelperFor($key);
+
+        return $helpers[$key];
+    }
+
+    static function newHelperFor($helperKey)
     {
-        $helperClass = "\\Primo\\DBHelpers\\Helper_{$adapter}";
+        $helperClass = "\\Primo\\PDOHelpers\\Helper_{$helperKey}";
+
         if (!class_exists($helperClass)) {
-            throw new \PDOException("adapter '{$adapter}' invalid or not yet supported by Primo-PDO");
+            throw new \PDOException("helper/adapter '{$helperKey}' invalid or not yet supported by Primo-PDO");
         }
+
         return new $helperClass();
+    }
+
+    function __construct($env, $options = [])
+    {
+        // 'database' (in $env or $options) overrides 'name'
+        if (!isset($env['database'])) {
+            if (isset($options['database'])) $env['database'] = $options['database'];
+            else $env['database'] = $env['name'];
+        }
+
+        if (!isset($env['logging'])) $env['logging'] = true;
+        $this->addLog($env['logging'], $env['database']);
+
+        // fix dsn!
+        $this->helper = static::helperFor($env);
+        $dsn = $this->helper->dsn($env);
+
+        $username = isset($env['user']) ? $env['user'] : trim(get_file_contents($env['user_file']));
+        $password = isset($env['pass']) ? $env['pass'] : trim(get_file_contents($env['pass_file']));
+
+        $options = array_replace($this->defaultOptions(), $options);
+
+        //**/ echo( "DSN: $dsn");
+        parent::__construct($dsn, $username, $password, $options); //**/ echo $dsn;
     }
 
     function defaultOptions()
@@ -29,48 +63,6 @@ class PDO extends \PDO
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_STATEMENT_CLASS => [\Primo\PDOSubclassed\PDOStatement::class, [$this]]
         ];
-    }
-
-    function __construct($config, $options = [])
-    {
-
-        // 'database' (in config or options) overrides 'name'
-
-        if (!isset($config['database'])) {
-            if (isset($options['database'])) $config['database'] = $options['database'];
-            else $config['database'] = $config['name'];
-        }
-
-        // fix dsn!
-        $this->helper = static::helperFor($config['adapter']);
-        $dsn = $this->helper->dsn($config);
-
-        $username = isset($config['user']) ? $config['user'] : trim(get_file_contents($config['user_file']));
-        $password = isset($config['pass']) ? $config['pass'] : trim(get_file_contents($config['pass_file']));
-
-        $options = array_replace($this->defaultOptions(), $options);
-
-        if (static::logs) $this->logAdd();
-
-        parent::__construct($dsn, $username, $password, $options);
-    }
-
-    function getLogs()
-    {
-        return $this->logs;
-    }
-
-    function logAdd($log = null)
-    {
-        if (!isset($this->logs)) $this->logs = new Logs();
-        $this->logs->logAdd($log);
-        return $this;
-    }
-
-    function logOff()
-    {
-        $this->logs = null;
-        return $this;
     }
 
     function run($sql = null, ...$args)
@@ -99,25 +91,23 @@ class PDO extends \PDO
 
     function query($sql)
     {
+        $start = microtime(true);
         try {
-            $start = microtime(true);
-            $result = parent::query($sql);
+            $stmt = parent::query($sql);
         } finally {
-
-            if (isset($this->logs)) {
+            if ($this->logs) {
                 $ms = microtime(true) - $start;
-                $result = isset($result) ? $result : false;
-                $this->logs->logThis($sql, $ms, $result !== false);
+                $stmt = isset($stmt) ? $stmt : false;
+                $this->logs->logThis($sql, null, $ms, ($stmt !== false));
             }
         }
-        return $result;
+        return $stmt;
     }
 
     function columnsOfTable($tableName)
     {
         return $this->helper->columnsOfTable($this, $tableName);
     }
-
 }
 
 // REFERENCES

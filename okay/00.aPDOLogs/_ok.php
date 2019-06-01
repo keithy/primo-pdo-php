@@ -10,4 +10,4 @@ $OKAY_SUITE = __DIR__;
 if(true !== require_once(__DIR__.'/../_okay.php')) return;
 
 # second time - initialisation code - one-time setup for this directory
-require_once(__DIR__."/../../src/Primo/PDOLog/Logs.php");
+require_once( __DIR__ . "/../../vendor/autoload.php");

@@ -20,7 +20,7 @@
 
   3. BDD style "english" output.
   ```
-  ok\expect("it to be good");
+  EXPECT("it to be good");
   ```
   4. Uses PHP built in `assert`
   ```
@@ -58,32 +58,42 @@ namespace {
 
     error_reporting(E_ALL);
 
+
     // if (extension_loaded('xdebug')) xdebug_disable(); // orange not to your taste
 
     /* Secure for a specific IP address/range configured in Apache <site>.conf
      *  and signified via the environment variable
      * You may have to adapt this for your security environment.
      */
+    global $OKAY_SUITE, $OKAY_SUITE_TOP;
+
     if (ok\isCLI()) { // cli runner
         if (!defined('BR')) define('BR', PHP_EOL);
-        if (!defined('KOUTPUT')) define('KOUTPUT', 'text/plain');
+        if (!defined('OKAY_OUTPUT')) define('OKAY_OUTPUT', 'text/plain');
     } else { // web runner
-        if (strpos($_SERVER['DEV_ALLOWED'], ".okay.") == false) {
+        if (strpos($_SERVER['DEV_ALLOWED'], ".kisting.") == false) {
             echo "Testing not authorised";
             exit;
         }
+
         // respond in plaintext for now.
-        header("Content-Type: ");
-        if (!defined('KOUTPUT')) define('KOUTPUT', 'text/plain');
+
+        if (!defined('OKAY_OUTPUT')) define('OKAY_OUTPUT', 'text/plain');
+        if (!defined('BR')) define('BR', PHP_EOL);
+        // if (!defined('BR')) define('BR', '<BR>');
+
+        header("Content-Type: " . OKAY_OUTPUT);
+        ini_set('html_errors', 0);
+
+        if (isset($_GET['ok'])) $OKAY_SUITE = $_SERVER['DOCUMENT_ROOT'] . $_GET['ok'];
     }
-    
+
     function ok($format)
     { // php<5.6
         $args = func_get_args(); // php<5.6
         $args[0] = ok\okay()->indent() . "     " . $format . BR;
         call_user_func_array('ok\printf', $args);
     }
-
 }
 
 namespace ok {
@@ -114,6 +124,7 @@ namespace ok {
     // useful for repopulating file fixtures into a directory
     function copy_all($from, $to, $match = '*')
     {
+        is_dir($to) ?: mkdir($to); // ensure existence
         foreach (glob("{$from}/{$match}") as $path) {
             copy($path, $to . '/' . basename($path));
         }
@@ -122,11 +133,12 @@ namespace ok {
     // A templating framework in a single function!
     function lookup_and_include($name, $dir, $includes = '_includes')
     {
+        //**/ echo("lookup_and_include($name, $dir, $includes = '_includes')\n");
         $target = "{$dir}/{$includes}/{$name}.inc";
         if (file_exists($target)) {
             return include $target;
         } else {
-            if ($dir != __DIR__ && $dir != "/") {
+            if ($dir != __DIR__ && $dir != "/" && !empty($dir)) {
                 return lookup_and_include($name, dirname($dir), $includes);
             }
         }
@@ -152,37 +164,35 @@ namespace ok {
     function __()
     {
         $msg = implode(' ', func_get_args());
-        printf( okay()->indent() . "%2d) " . $msg . BR, ++okay()->count_expectations);
+        printf(okay()->indent() . "%2d) " . $msg . BR, ++okay()->count_expectations);
         return okay();
     }
-    
+
     function given($path)
     {
-        $given = substr($path, strlen(__DIR__));
-        $given = str_replace(array('.inc', '.php', '/', '/_'), array('', '', ' ', ' '), $given);
-        printf(BR . "<div class='test'><em>%sGiven$given</em><br><div class = 'output'>" . BR, okay()->indent());
+        global $OKAY_SUITE_TOP;
+
+        $given = substr($path, strlen($OKAY_SUITE_TOP));
+        $given = preg_replace(array('|/\d+.|', '|.inc|', '|.php|', '|/|', '|/_|', ), array(' ', '', ' ', ' '), $given);
+        printf(BR . "<div class='test'><em>%sGiven{$given}</em><br><div class = 'output'>" . BR, okay()->indent());
     }
-    
+
     // $okay = ok\expect("expectation...")
-    function expect($message)
+    function EXPECT($message)
     {
         return __("Expect", $message);
     }
-
-    function to($message)
-    {
-        return _("to", $message);
-    }
-
-    function should($message)
+ 
+    function Should($message)
     {
         return _("should", $message);
     }
-
+    
     /*
      * If code under test may have an endless loop, this utility comes in handy
      * ok\die_after(5);
      */
+
     function die_after($over = 99)
     {//calls
         static $the_edge = 0;
@@ -191,7 +201,7 @@ namespace ok {
 
     function isCLI()
     {
-        return (php_sapi_name() == 'cli' || KOUTPUT == 'plain/text');
+        return (php_sapi_name() == 'cli' || (defined('OKAY_OUTPUT') && OKAY_OUTPUT == 'text/plain'));
     }
 
     // function printf($format, ...$args) { // php>=5.6
@@ -222,7 +232,6 @@ namespace ok {
 
     class Okay
     {
-
         const VERSION = "0.8";
 
         public $dir;
@@ -256,7 +265,7 @@ namespace ok {
 
             $result = null; // if error occurred
 
-            given( $path );
+            given($path);
 
             $start = microtime(true);
 
@@ -309,8 +318,8 @@ namespace ok {
         function run($dir)
         {
             okay($this);
-            if (static::initializeRequested()) $this->perform('initialize');
-
+            if (static::initializeRequested()) $this->perform($dir, '_initialize.php');
+            
             printf("<div class = 'suite'>");
 
             $this->perform($dir, '_ok.php');
@@ -366,17 +375,16 @@ namespace ok {
                 printf("<em style = 'assertion-failed'>%2d} %sFAILED(%s):</em> %s" . BR, $this->count_expectations, $this->indent(), $line, $msg);
             }
         }
-
     }
 
-    global $OKAY_SUITE;
     if (!isset($OKAY_SUITE)) $OKAY_SUITE = __DIR__;
+    $OKAY_SUITE_TOP = $OKAY_SUITE;
 
     $version = Okay::VERSION;
     $title = "OKAY($version):" . $OKAY_SUITE;
 
     if (isCLI()) printf("$title" . BR);
-    else \ok\lookup_and_include('header_okay', $dir);
+    else \ok\lookup_and_include('header_okay', $OKAY_SUITE);
 
     $okay = new Okay();
     $okay->run($OKAY_SUITE);
@@ -384,9 +392,9 @@ namespace ok {
     $count_files = $okay->count_files;
     $count_expectations = $okay->count_expectations;
     $count_failed_assertions = $okay->count_failed_assertions;
-    
+
     $failedMsg = ($count_failed_assertions > 0) ? "failed {$count_failed_assertions} assertions" : "OK";
     if (isCLI())
             printf("Ran %d files (%d expectations) %s" . BR, $count_files, $count_expectations, $failedMsg);
-    else \ok\lookup_and_include('footer_okay', $dir);
+    else \ok\lookup_and_include('footer_okay', $OKAY_SUITE);
 }    

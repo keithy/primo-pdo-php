@@ -10,7 +10,7 @@ class PDOStatement extends \PDOStatement
 
     protected function __construct(\Primo\PDOSubclassed\PDO $pdo)
     {
-        $this->logs = $pdo->getLogs();
+        $this->logs = $pdo->logs;
     }
 
     function execute($params = null)
@@ -44,7 +44,7 @@ class PDOStatement extends \PDOStatement
         }
         $ms = 1000 * (microtime(true) - $start);
 
-        $this->logs->logThis($sql, $ms, $result);
+        $this->logs->logThis($sql, null, $ms, $result);
     }
 
     function bindParam($parameter, &$variable, $data_type = \PDO::PARAM_STR, $maxlen = NULL, $driverdata = NULL)
@@ -76,8 +76,9 @@ class PDOStatement extends \PDOStatement
         return $this;
     }
 
-    function asObjects($classRef, ...$args)
+    function asObjects($classRef = null, ...$args)
     {
+        if (null == $classRef) return $this->mode(\PDO::FETCH_CLASS, 'StdClass' );
         return $this->mode(\PDO::FETCH_CLASS, $classRef, $args);
     }
 

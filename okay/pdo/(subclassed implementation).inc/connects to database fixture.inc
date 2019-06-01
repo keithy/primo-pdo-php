@@ -1,55 +1,73 @@
 <?php
 
-$PDO_CLASS = "Primo\PDOWrapped\PDO";
+namespace ok {
 
-$log = "";
+    EXPECT("simple query against 'one_user' fixture");
 
-OK\EXPECT("simple query against 'one_user' fixture");
+    $log = "";
 
-$pdo = pdoOnFixture('one_user')->logAdd( function($sql)use(&$log) { $log = $sql; } );
+    $pdo = pdoOnFixture('one_user');
 
-$result = $pdo->run('SELECT count(*) FROM users')->fetchColumn();
+    $pdo->addLog(function ($sql) use (& $log) {
+        $log = $sql;
+    });
 
-OK\TO("return 1 result");
+    $result = $pdo->run('SELECT count(*) FROM users')->fetchColumn();
 
-assert($result == 1);
+    _("to return 1 result");
 
-OK\TO("log sql");
+    assert($result == 1);
 
-assert($log == 'SELECT count(*) FROM users');
+    _("to log sql");
 
-OK\EXPECT("Simple query against 'seeded' fixture");
+    assert($log == 'SELECT count(*) FROM users', "no");
+}
 
-$pdo = pdoOnFixture('seeded')->logAdd( function($sql)use(&$log) { $log = $sql; } );
+namespace ok {
 
-$result = $pdo->run('SELECT * FROM users')->fetchAll();
+    EXPECT("Simple query against 'seeded' fixture");
 
-OK\TO("return 11 results");
+    $log = "";
 
-assert(count($result) == 11);
- 
-OK\EXPECT("prepared statements with ?s");
+    $pdo = pdoOnFixture('seeded')->addLog(function($sql)use(&$log) {
+        $log = $sql;
+    });
 
-$stmt = $pdo->run('SELECT count(*) FROM users WHERE username = ? AND email = ?', 'admin', 'admin@admin.com');
+    $result = $pdo->run('SELECT * FROM users')->fetchAll();
 
-OK\TO("return valid result");
+    _("to return 11 results");
 
-assert( 1 == $stmt->fetchColumn());
+    assert(count($result) == 11, print_r($result,true));
+}
 
-OK\_("and log sql");
+namespace ok {
 
-$prepared = "SELECT count(*) FROM users WHERE username = `admin` AND email = `admin@admin.com`";
+    EXPECT("prepared statements with ?s");
 
-assert( $log == $prepared);
+    $stmt = $pdo->run('SELECT count(*) FROM users WHERE username = ? AND email = ?', 'admin', 'admin@admin.com');
 
-OK\EXPECT("prepared statements with :named args");
+    _("to return valid result");
 
-$stmt = $pdo->run('SELECT count(*) FROM users WHERE username = :user AND email = :email', [':user' => 'admin', ':email' => 'admin@admin.com']);
+    assert(1 == $stmt->fetchColumn());
 
-OK\TO("return valid result");
+    _("and log sql");
 
-assert( 1 == $stmt->fetchColumn());
+    $prepared = "SELECT count(*) FROM users WHERE username = `admin` AND email = `admin@admin.com`";
 
-OK\_("and log sql");
+    assert($log == $prepared);
+}
 
-assert( $log == $prepared);
+namespace ok {
+
+    EXPECT("prepared statements with :named args");
+
+    $stmt = $pdo->run('SELECT count(*) FROM users WHERE username = :user AND email = :email', [':user' => 'admin', ':email' => 'admin@admin.com']);
+
+    _("to return valid result");
+
+    assert(1 == $stmt->fetchColumn());
+
+    _("and log sql");
+
+    assert($log == $prepared);
+}

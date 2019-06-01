@@ -9,7 +9,9 @@ $OKAY_SUITE = __DIR__;
 # first time
 if (true !== require_once(__DIR__ . '/../_okay.php')) return;
 
-# second time
-foreach (glob(__DIR__ . '/../../src/Primo/Phinx/*.php') as $file)
-    require_once($file);
-  
+require_once( __DIR__ . "/../../vendor/autoload.php");
+
+global $CONFIG, $READER;
+
+$READER = new \Primo\Phinx\ConfigReader(__DIR__ . "/../_fixtures/phinx.php");
+$CONFIG = $READER->data;
