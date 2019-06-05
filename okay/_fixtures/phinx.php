@@ -8,18 +8,30 @@
 return
         [
             'logging' => true,
-            /* 'migrate' => '0002' */ // hold all at specific version
+            'migrate' => '0200', // hold all at specific version
             'version_order' => 'creation',
             'paths' => [
                 'migrations' => __DIR__ . '/migrations',
                 'seeds' => __DIR__ . '/seeds',
-                'snapshots' => __DIR__ . '/snapshots'
+            ],
+            'sqlite' => [
+                'dir' => '/tmp/primo-pdo/fixtures',
+                'which' => [
+                    'snapshots' => [
+                        'dir' => '/tmp/primo-pdo/snapshots'
+                    ]
+                ]
+            ],
+            'mysql' => [
+                'snapshots' => [
+                    'table_suffix' => '_snap'
+                ]
             ],
             'environments' => [
                 'default_migration_table' => 'phinx',
                 'default_database' => 'seeded',
                 'empty' => [
-                     'logging' => false,
+                    'logging' => false,
                     'adapter' => 'sqlite',
                     'helper' => 'sqlite', /* an example, defaults to adapter */
                     'name' => "user_table_empty",
@@ -51,7 +63,12 @@ return
                     'pass' => '',
                     'migrate' => [
                         'seeders' => 'UserSeeder'
-                    ]
+                    ],
+                    'which' => [
+                        'snapshots' => [
+                            'dir' => '/tmp/primo-pdo/snapshots'
+                        ]
+                    ],
                 ]
             ]
 ];

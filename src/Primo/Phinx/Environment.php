@@ -15,91 +15,94 @@ namespace Primo\Phinx;
 # 'logging'
 
 use \Primo\PDOLog\LogsTrait;
-use \Primo\PDOSubclassed\PDO;
+use \Primo\PDOWrapped\PDO;
+use Phinx\Migration\Manager;
 
 class Environment extends \ArrayObject
 {
-    use \Primo\PDOLog\LogsTrait;
 
-    static function phinxInDo($configPath, $dir, $aClosure)
+    function exists()
     {
-        $phinx = new \Phinx\Wrapper\TextWrapper(new \Phinx\Console\PhinxApplication());
-        $phinx->setOption('configuration', $configPath);
-
-        $cwd = getcwd();
-        try {
-            chdir($dir);
-            $aClosure($phinx);
-        } finally {
-            chdir($cwd);
-        }
+        return PDO::helperFor($this)->databaseExists($this);
     }
 
-    // if it is present
-    function withPhinxDo($aClosure)
-    {
-        is_dir($this['dir']) ?: mkdir($this['dir']); // ensure existence of working directory
-
-        return static::phinxInDo($this['config'], $this['dir'], $aClosure);
-    }
-    /*
-     * $choice - the database environment to migrate
-     *
-     * $pathsKey - change directory to the path given in the paths dictionary
-     *           - if the db is file based 
-     * 
-     * $seed - whether to apply seeds (i.e. on initial creation)
-     */
-
-    function applyMigrations($seed = false)
-    {
-        if (!isset($this->logs)) $this->addLog($this['logging']);
-
-        $this->withPhinxDo(function( $phinx ) use ( $seed ) {
-
-            $env = $this;
-            $choice = $env['choice'];
-            $target = null;
-            $seeders = null;
-
-            if (isset($env['migrate'])) {
-                $migrate = $env['migrate'];
-                if (isset($migrate['target'])) $target = $migrate['target'];
-                if (isset($migrate['seeders'])) $seeders = $migrate['seeders'];
-            }
-
-            $this->logThis( $phinx->getMigrate($choice, $target), "Migrating");
-
-            if ($seed && false !== $seeders) {
-                $this->logThis($phinx->getSeed($choice, $target, $seeders), "Seeding");
-            }
-        });
-    }
-
-    function clobberDatabase()
+    function clobber()
     {
         PDO::helperFor($this)->clobberDatabase($this);
         return $this;
     }
 
-    function copyDatabaseTo($to)
+    function copyTo($to)
     {
         PDO::helperFor($this)->copyDatabase($this, $to);
         return $to;
     }
 
-    function ensureCreated()
+    function migrate()
     {
-        $this->applyMigrations(true);
+        $migrator = new ApplyPhinx($this);
+        $migrator(!$this->exists());
+
         return $this;
     }
 
-    function logThis($report, $tag)
+    function recreate()
     {
-        if (isset($this->logs)) {
-            foreach (explode("\n", $report) as $line) {
-                $this->logs->logThis($line, $tag);
+        $this->clobber()->migrate();
+
+        return $this;
+    }
+
+    /**
+     *  Adjusts the base environment for situations where
+     *  multiple but similar db's are accessed:
+     * 'snapshots' , 'backups' , or 'fixtures'
+     * 
+     * Alternative values are provided - per helper/adapter
+     * 
+     * @param type $optionKey
+     * @return $this
+     */
+    function which($optionKey, $whichKey = 'which')
+    {
+        $clone = clone $this;
+
+        if (isset($clone[$whichKey][$optionKey])) {
+            foreach (($clone[$whichKey][$optionKey]) as $key => $value) {
+                if (is_array($value) && isset($clone[$key])) {
+
+                    foreach ($value as $key2 => $value2) {
+                        $clone[$key][$key2] = $value2;
+                    }
+                } else $clone[$key] = $value;
             }
         }
+        return $clone;
+    }
+
+    /**
+     * Adjusts the base environment for situations where
+     * multiple db's are created:
+     * 'per client' , 'per user' , or per-scope
+     * 
+     * @param type $optionKey
+     * @return $this
+     */
+    function atPut($varKey, $scopeKey)
+    {
+        $per = "%%{$varKey}%%";
+
+        $clone = clone $this;
+        foreach ($clone as $k => $v) {
+            if (is_string($v)) {
+                $clone[$k] = str_replace($per, $scopeKey, $v);
+            }
+        }
+        return $clone;
+    }
+
+    function pdo( $options )
+    {
+        return new PDO( $this, $options );
     }
 }

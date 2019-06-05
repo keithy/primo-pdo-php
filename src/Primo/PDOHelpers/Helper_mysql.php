@@ -12,7 +12,7 @@ class Helper_mysql
     function dsn($env)
     {
         if (is_string($env)) return $env;
-       
+
         $dsn = 'mysql:host=' . $env['host'] . ';port=' . (isset($env['port']) ? $env['port'] : 3306);
         $dsn .= ';charset=' . (isset($env['charset']) ? $env['charset'] : 'utf8');
         if ('' !== $env['database']) $dsn .= ';dbname=' . $env['database'];
@@ -49,5 +49,10 @@ class Helper_mysql
     function copyDatabaseFromMySqlTo($from, $to)
     {
         /* left as an excercise for the reader */
+    }
+
+    function switch($env, $pathsKey)
+    {
+        $env['name'] = $env['name'].'_'.$optionsKey;
     }
 }

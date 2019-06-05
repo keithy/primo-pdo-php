@@ -1,8 +1,7 @@
 <?php
 
-# 
 /*
-  # OKAY 0.8 -  Keeping It Simple Specifications for PHP!
+  # OKAY -  Keeping It Simple Specifications for PHP!
 
   Totally the simplest BDD/TDD framework,... in the world!
 
@@ -49,6 +48,7 @@
  */
 
 namespace {
+    $OKAY_VERSION = '0.9.5';
     // Take your pick
     ini_set('log_errors', 1);
     ini_set('display_errors', 1);
@@ -58,14 +58,15 @@ namespace {
 
     error_reporting(E_ALL);
 
-
     // if (extension_loaded('xdebug')) xdebug_disable(); // orange not to your taste
+    // define our own magic constants to point to the project and site roots.
+    if (!defined('__PROJECT__')) define("__PROJECT__", dirname(dirname(__DIR__)));
+    if (!defined('__SITE__')) define("__SITE__", __PROJECT__ . "/public");
 
     /* Secure for a specific IP address/range configured in Apache <site>.conf
      *  and signified via the environment variable
      * You may have to adapt this for your security environment.
      */
-    global $OKAY_SUITE, $OKAY_SUITE_TOP;
 
     if (ok\isCLI()) { // cli runner
         if (!defined('BR')) define('BR', PHP_EOL);
@@ -85,7 +86,7 @@ namespace {
         header("Content-Type: " . OKAY_OUTPUT);
         ini_set('html_errors', 0);
 
-        if (isset($_GET['ok'])) $OKAY_SUITE = $_SERVER['DOCUMENT_ROOT'] . $_GET['ok'];
+        if (isset($_GET['ok'])) $OKAY_SUITE = __PROJECT__ . '/' . $_GET['ok'];
     }
 
     function ok($format)
@@ -170,10 +171,8 @@ namespace ok {
 
     function given($path)
     {
-        global $OKAY_SUITE_TOP;
-
-        $given = substr($path, strlen($OKAY_SUITE_TOP));
-        $given = preg_replace(array('|/\d+.|', '|.inc|', '|.php|', '|/|', '|/_|', ), array(' ', '', ' ', ' '), $given);
+        $given = substr($path, strlen(__OKAY__));
+        $given = preg_replace(array('|/\d+\.|', '|\.inc|', '|\.php|', '|/|', '|/_|',), array(' ', '', ' ', ' '), $given);
         printf(BR . "<div class='test'><em>%sGiven{$given}</em><br><div class = 'output'>" . BR, okay()->indent());
     }
 
@@ -182,12 +181,11 @@ namespace ok {
     {
         return __("Expect", $message);
     }
- 
+
     function Should($message)
     {
         return _("should", $message);
     }
-    
     /*
      * If code under test may have an endless loop, this utility comes in handy
      * ok\die_after(5);
@@ -232,8 +230,6 @@ namespace ok {
 
     class Okay
     {
-        const VERSION = "0.8";
-
         public $dir;
         public $count_files;
         public $count_expectations;
@@ -319,7 +315,7 @@ namespace ok {
         {
             okay($this);
             if (static::initializeRequested()) $this->perform($dir, '_initialize.php');
-            
+
             printf("<div class = 'suite'>");
 
             $this->perform($dir, '_ok.php');
@@ -378,10 +374,10 @@ namespace ok {
     }
 
     if (!isset($OKAY_SUITE)) $OKAY_SUITE = __DIR__;
-    $OKAY_SUITE_TOP = $OKAY_SUITE;
-
-    $version = Okay::VERSION;
-    $title = "OKAY($version):" . $OKAY_SUITE;
+    if (!defined('__OKAY__')) define('__OKAY__', __FILE__);
+ 
+     
+    $title = "OKAY($OKAY_VERSION):" . $OKAY_SUITE;
 
     if (isCLI()) printf("$title" . BR);
     else \ok\lookup_and_include('header_okay', $OKAY_SUITE);

@@ -14,7 +14,7 @@ namespace ok {
 
     _("has some 'paths' settings");
 
-    assert(count($CONFIG['paths']) == 3);
+    assert(count($CONFIG['paths']) == 2);
 }
 
 namespace ok {
