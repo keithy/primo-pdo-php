@@ -72,8 +72,19 @@ class LogsOutput implements OutputInterface
      * {@inheritdoc}
      */
     public function getVerbosity()
-    {
-        return self::VERBOSITY_QUIET;
+    { 
+        /*
+      const VERBOSITY_QUIET = 16;
+      const VERBOSITY_NORMAL = 32;
+      const VERBOSITY_VERBOSE = 64;
+      const VERBOSITY_VERY_VERBOSE = 128;
+      const VERBOSITY_DEBUG = 256;
+
+      const OUTPUT_NORMAL = 1;
+      const OUTPUT_RAW = 2;
+      const OUTPUT_PLAIN = 4;
+     */
+        return self::VERBOSITY_DEBUG;
     }
 
     /**
@@ -81,7 +92,7 @@ class LogsOutput implements OutputInterface
      */
     public function isQuiet()
     {
-        return true;
+        return self::VERBOSITY_QUIET === $this->getVerbosity();
     }
 
     /**
@@ -89,7 +100,7 @@ class LogsOutput implements OutputInterface
      */
     public function isVerbose()
     {
-        return false;
+        return self::VERBOSITY_VERBOSE <=  $this->getVerbosity();
     }
 
     /**
@@ -97,7 +108,7 @@ class LogsOutput implements OutputInterface
      */
     public function isVeryVerbose()
     {
-        return false;
+        return self::VERBOSITY_VERY_VERBOSE <=  $this->getVerbosity();
     }
 
     /**
@@ -105,7 +116,7 @@ class LogsOutput implements OutputInterface
      */
     public function isDebug()
     {
-        return false;
+        return self::VERBOSITY_DEBUG <=  $this->getVerbosity();
     }
 
     /**

@@ -12,10 +12,16 @@
       "role": "Developer"
     }
   ],
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https:\/\/github.com\/keithy\/phinx"
+    }
+  ],
   "require": {
   },
   "require-dev": {
-    "robmorgan/phinx": "^0.10.7",
+    "robmorgan/phinx": "dev-refactored_manager",
     "fzaninotto/faker": "^1.8"
   },
   "autoload": {

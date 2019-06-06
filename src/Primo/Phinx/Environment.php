@@ -26,9 +26,9 @@ class Environment extends \ArrayObject
         return PDO::helperFor($this)->databaseExists($this);
     }
 
-    function clobber()
+    function clobber( $areYouSure )
     {
-        PDO::helperFor($this)->clobberDatabase($this);
+        if ($areYouSure) PDO::helperFor($this)->clobberDatabase($this);
         return $this;
     }
 
@@ -40,15 +40,20 @@ class Environment extends \ArrayObject
 
     function migrate()
     {
+        $exists = $this->exists(); // test now, it will already be created by the next lines
+        
+        if (!$exists) PDO::helperFor($this)->ensureDir($this);
+        
         $migrator = new ApplyPhinx($this);
-        $migrator(!$this->exists());
+        
+        $migrator( !$exists );
 
         return $this;
     }
 
-    function recreate()
+    function create( $fromScratch = true )
     {
-        $this->clobber()->migrate();
+        $this->clobber( $fromScratch )->migrate();
 
         return $this;
     }
@@ -101,7 +106,7 @@ class Environment extends \ArrayObject
         return $clone;
     }
 
-    function pdo( $options )
+    function pdo( $options = [] )
     {
         return new PDO( $this, $options );
     }

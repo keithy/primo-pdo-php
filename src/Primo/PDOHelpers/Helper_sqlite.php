@@ -23,29 +23,37 @@ class Helper_sqlite
         return $pdo->run("SELECT name FROM pragma_table_info( `{$table}` )")->fetchAllAsColumn();
     }
 
+    function fileExt($env)
+    {
+        return isset($env['suffix']) ? $env['suffix'] : '.sqlite3';
+    }
+
     function clobberDatabase($env)
     {
-        return array_map('unlink', glob($env['dir'] . DIRECTORY_SEPARATOR . $env['name'] . '.sqlite3'));
+        return array_map('unlink', glob($env['dir'] . DIRECTORY_SEPARATOR . $env['name'] . $this->fileExt($env)));
     }
-    
-    function databaseExists( $env )
+
+    function databaseExists($env)
     {
-        return file_exists( $env['dir'] . DIRECTORY_SEPARATOR . $env['name'] . '.sqlite3');
+        return file_exists($env['dir'] . DIRECTORY_SEPARATOR . $env['name'] . $this->fileExt($env));
     }
 
     function copyDatabase($from, $to)
     {
-        PDO::helperFor($to)->copyDatabaseFromSQLiteTo($from, $to);
+        $fromPath = $from['dir'] . DIRECTORY_SEPARATOR . $from['name'] . $this->fileExt($from);
+        PDO::helperFor($to)->copyDatabaseFromSQLiteTo($fromPath, $to);
     }
 
-    function copyDatabaseFromSQLiteTo($from, $to)
+    function ensureDir( $env )
     {
-        is_dir($to['dir']) ?: mkdir($to['dir'], 01770, true); // ensure existence\
-
-        foreach (glob($from['dir'] . DIRECTORY_SEPARATOR . $from['name'] . '.sqlite3') as $path) {
-
-            copy($path, $to['dir'] . DIRECTORY_SEPARATOR . $to['name'] . '.sqlite3');
-        }
+        is_dir($env['dir']) ?: mkdir($env['dir'], 01770, true); // ensure existence 
+    }
+    
+    function copyDatabaseFromSQLiteTo($fromPath, $to)
+    {
+         
+        $this->ensureDir( $to );
+        copy($fromPath, $to['dir'] . DIRECTORY_SEPARATOR . $to['name'] . $this->fileExt($to));
     }
 
     function copyDatabaseFromMySqlTo($from, $to)

@@ -38,7 +38,7 @@ class Helper_mysql
 
     function copyDatabase($from, $to)
     {
-        PDO::helperFor(to)->copyDatabaseFromMySqlTo($from, $to);
+        PDO::helperFor($to)->copyDatabaseFromMySqlTo($from, $to);
     }
 
     function copyDatabaseFromSQLiteTo($from, $to)
@@ -53,6 +53,10 @@ class Helper_mysql
 
     function switch($env, $pathsKey)
     {
-        $env['name'] = $env['name'].'_'.$optionsKey;
+        $env['name'] = $env['name'] . '_' . $optionsKey;
+    }
+
+    function ensureDir($env)
+    {
     }
 }

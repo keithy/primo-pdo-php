@@ -51,7 +51,8 @@ class PDO extends \PDO
 
         $options = array_replace($this->defaultOptions(), $options);
 
-        //**/ echo( "DSN: $dsn");
+         
+        //**/ echo "DSN: $dsn options:", json_encode($options) , "\n";
         parent::__construct($dsn, $username, $password, $options); //**/ echo $dsn;
     }
 

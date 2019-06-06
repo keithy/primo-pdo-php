@@ -29,6 +29,6 @@ namespace ok {
 
     $paths = $env['paths'];
 
-    assert(count($paths) == 3);
+    assert(count($paths) == 2);
 }
   

@@ -8,7 +8,9 @@
 return
         [
             'logging' => true,
-            'migrate' => '0200', // hold all at specific version
+            'migrate' => [
+                'target' => '0002'
+            ], // hold all at specific version
             'version_order' => 'creation',
             'paths' => [
                 'migrations' => __DIR__ . '/migrations',
@@ -23,8 +25,10 @@ return
                 ]
             ],
             'mysql' => [
-                'snapshots' => [
-                    'table_suffix' => '_snap'
+                'which' => [
+                    'snapshots' => [
+                        'table_suffix' => '_snap'
+                    ]
                 ]
             ],
             'environments' => [
@@ -39,11 +43,10 @@ return
                     'pass' => '',
                     'migrate' => [
                         'target' => '0001',
-                        'seeders' => false
+                        'seeders' => []
                     ],
                     'paths' => [
-                        'migrations' => __DIR__ . '/migrations',
-                        'snapshots' => __DIR__ . '/snapshots'
+                        'migrations' => __DIR__ . '/migrations'
                     ],
                 ],
                 'one_user' => [
@@ -53,7 +56,7 @@ return
                     'pass' => '',
                     'logging' => 'Primo\PDOLog\Logs',
                     'migrate' => [
-                        'seeders' => false
+                        'seeders' => []
                     ]
                 ],
                 'seeded' => [
@@ -62,7 +65,7 @@ return
                     'user' => '',
                     'pass' => '',
                     'migrate' => [
-                        'seeders' => 'UserSeeder'
+                        'seeders' => ['UserSeeder']
                     ],
                     'which' => [
                         'snapshots' => [
