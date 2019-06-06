@@ -50,7 +50,6 @@ class PDO extends \PDO
         $password = isset($env['pass']) ? $env['pass'] : trim(get_file_contents($env['pass_file']));
 
         $options = array_replace($this->defaultOptions(), $options);
-
          
         //**/ echo "DSN: $dsn options:", json_encode($options) , "\n";
         parent::__construct($dsn, $username, $password, $options); //**/ echo $dsn;

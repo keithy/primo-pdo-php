@@ -12,11 +12,18 @@
       "role": "Developer"
     }
   ],
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https:\/\/github.com\/keithy\/okay-php.git"
+    } 
+  ],
   "require": {
   },
   "require-dev": {
     "robmorgan/phinx": "^0.10.7",
-    "fzaninotto/faker": "^1.8"
+    "fzaninotto/faker": "^1.8",
+    "okay/okay": "dev-master"
   },
   "autoload": {
     "psr-4": {
