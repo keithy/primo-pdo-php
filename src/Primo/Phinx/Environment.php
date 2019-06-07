@@ -26,7 +26,7 @@ class Environment extends \ArrayObject
         return PDO::helperFor($this)->databaseExists($this);
     }
 
-    function clobber( $areYouSure )
+    function clobber($areYouSure)
     {
         if ($areYouSure) PDO::helperFor($this)->clobberDatabase($this);
         return $this;
@@ -41,19 +41,19 @@ class Environment extends \ArrayObject
     function migrate()
     {
         $exists = $this->exists(); // test now, it will already be created by the next lines
-        
+
         if (!$exists) PDO::helperFor($this)->ensureDir($this);
-        
+
         $migrator = new ApplyPhinx($this);
-        
-        $migrator( !$exists );
+
+        $migrator(!$exists);
 
         return $this;
     }
 
-    function create( $fromScratch = true )
+    function create($fromScratch = true)
     {
-        $this->clobber( $fromScratch )->migrate();
+        $this->clobber($fromScratch)->migrate();
 
         return $this;
     }
@@ -93,21 +93,22 @@ class Environment extends \ArrayObject
      * @param type $optionKey
      * @return $this
      */
-    function atPut($varKey, $scopeKey)
+    function atPut($varKey, $varValues)
     {
-        $per = "%%{$varKey}%%";
+        $varKeys = array_map( function($key) { return "%%{$key}%%"; } , (array) $varKeys); 
+        $varValues = (array) $varValues;
 
         $clone = clone $this;
         foreach ($clone as $k => $v) {
             if (is_string($v)) {
-                $clone[$k] = str_replace($per, $scopeKey, $v);
+                $clone[$k] = str_replace($varKeys, $varValues, $v);
             }
         }
         return $clone;
     }
 
-    function pdo( $options = [] )
+    function pdo($options = [])
     {
-        return new PDO( $this, $options );
+        return new PDO($this, $options);
     }
 }

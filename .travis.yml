@@ -1,5 +1,9 @@
 language: php
 php: [7.3,5.6]
-before_script: composer update
+before_script: 
+  - composer self-update -q
+  - if [ -n "$GITHUB_TOKEN" ]; then composer config github-oauth.github.com ${GITHUB_TOKEN}; fi;
+  - composer -vvv update --prefer-dist 
+  - composer show -i
 after_script: ls -la /tmp/primo-pdo/snapshots
 script: php "okay/_okay.php" -I
