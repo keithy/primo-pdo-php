@@ -50,7 +50,7 @@ class PDO extends \PDO
         $password = isset($env['pass']) ? $env['pass'] : trim(get_file_contents($env['pass_file']));
 
         $options = array_replace($this->defaultOptions(), $options);
-         
+
         //**/ echo "DSN: $dsn options:", json_encode($options) , "\n";
         parent::__construct($dsn, $username, $password, $options); //**/ echo $dsn;
     }
@@ -61,6 +61,7 @@ class PDO extends \PDO
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
             \PDO::ATTR_STATEMENT_CLASS => [\Primo\PDOSubclassed\PDOStatement::class, [$this]]
         ];
     }
@@ -82,7 +83,7 @@ class PDO extends \PDO
         // handle ("sql with ?", [val])
         // handle ("sql with :name", [':name' => 'val'])
         // handle ("sql with :name", ['name' => 'val'])
-        $args = is_array($args[0]) ? $args[0] : $args;
+        $args = is_array($args[0]) ? array_merge(...$args) : $args;
 
         $success = $stmt->execute($args);
 

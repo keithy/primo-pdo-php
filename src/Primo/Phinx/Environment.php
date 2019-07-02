@@ -81,8 +81,15 @@ class Environment extends \ArrayObject
                     }
                 } else $clone[$key] = $value;
             }
+            $clone[$whichKey] = $optionKey;
         }
+
         return $clone;
+    }
+
+    function atPutAll($dict)
+    {
+        return $this->atPut(array_keys($dict), array_values($dict));
     }
 
     /**
@@ -93,9 +100,11 @@ class Environment extends \ArrayObject
      * @param type $optionKey
      * @return $this
      */
-    function atPut($varKey, $varValues)
+    function atPut($varKeys, $varValues)
     {
-        $varKeys = array_map( function($key) { return "%%{$key}%%"; } , (array) $varKeys); 
+        $varKeys = array_map(function($key) {
+            return "%%{$key}%%";
+        }, (array) $varKeys);
         $varValues = (array) $varValues;
 
         $clone = clone $this;

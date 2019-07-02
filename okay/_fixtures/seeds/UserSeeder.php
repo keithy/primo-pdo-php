@@ -15,7 +15,7 @@ class UserSeeder extends AbstractSeed {
     public function run() {
         $faker = Faker\Factory::create();
         $data = [];
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 5; $i++) {
             $data[] = [
                 'username' => $faker->userName,
                 'password' => sha1($faker->password),
@@ -27,7 +27,7 @@ class UserSeeder extends AbstractSeed {
             ];
         }
 
-        $this->table('users')->insert($data)->save();
+        $this->table('user')->insert($data)->save();
     }
 
 }

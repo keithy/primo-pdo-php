@@ -4,7 +4,6 @@ namespace Primo\PDOSubclassed;
 
 class PDOStatement extends \PDOStatement
 {
-
     protected $logs;
     protected $bindings = [];
 
@@ -71,14 +70,17 @@ class PDOStatement extends \PDOStatement
 
     function mode(...$args)
     {
-        if (!$this->setFetchMode(...$args)) throw new \PDO\Exception('setFetchMode() failed');
+        if (!$this->setFetchMode(...$args)) {
 
+            $exists = class_exists($args[1]) ?: "- Class {$args[1]} not found";
+            throw new /* \PDO */ \Exception("setFetchMode() failed $exists");
+        }
         return $this;
     }
 
     function asObjects($classRef = null, ...$args)
     {
-        if (null == $classRef) return $this->mode(\PDO::FETCH_CLASS, 'StdClass' );
+        if (null == $classRef) return $this->mode(\PDO::FETCH_CLASS, 'StdClass');
         return $this->mode(\PDO::FETCH_CLASS, $classRef, $args);
     }
 
@@ -99,5 +101,4 @@ class PDOStatement extends \PDOStatement
     {
         return $this->fetchAll(\PDO::FETCH_COLUMN, $n);
     }
-
 }

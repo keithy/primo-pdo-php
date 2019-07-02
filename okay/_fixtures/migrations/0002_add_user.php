@@ -40,7 +40,7 @@ class AddUser extends AbstractMigration
             'active' => 1
         ];
 
-        $table = $this->table('users');
+        $table = $this->table('user');
         $table->insert($singleRow);
         $table->saveData();
     }

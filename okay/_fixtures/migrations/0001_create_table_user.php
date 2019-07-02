@@ -1,15 +1,17 @@
 <?php
 
+// https://www.teamten.com/lawrence/programming/use-singular-nouns-for-database-table-names.html
+
 use Phinx\Migration\AbstractMigration;
 
-class CreateTableUsers extends AbstractMigration {
+class CreateTableUser extends AbstractMigration {
 
     /**
      * More information on writing migrations is available here:
      * http://docs.phinx.org/en/latest/migrations.html#the-abstractmigration-class
      */
     public function up() {
-        $table = $this->table('users');
+        $table = $this->table('user');
         $table->addColumn('username', 'string', ['limit' => 255, 'null' => false])
         ->addColumn('password', 'string', ['limit' => 255, 'null' => false])
         ->addColumn('password_salt', 'string', ['limit' => 255, 'null' => false])

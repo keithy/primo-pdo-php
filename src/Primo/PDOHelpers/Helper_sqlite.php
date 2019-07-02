@@ -20,7 +20,7 @@ class Helper_sqlite
 
     function columnsOfTable($pdo, $table)
     {
-        return $pdo->run("SELECT name FROM pragma_table_info( `{$table}` )")->fetchAllAsColumn();
+        return $pdo->run("SELECT name FROM pragma_table_info( '{$table}' )")->fetchAllAsColumn();
     }
 
     function fileExt($env)

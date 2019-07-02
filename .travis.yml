@@ -6,4 +6,4 @@ before_script:
   - composer -vvv update --prefer-dist 
   - composer show -i
 after_script: ls -la /tmp/primo-pdo/snapshots
-script: php "okay/_okay.php" -I
+script: php "okay/_ok.php" -I
