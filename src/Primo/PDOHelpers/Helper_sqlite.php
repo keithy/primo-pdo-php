@@ -44,15 +44,15 @@ class Helper_sqlite
         PDO::helperFor($to)->copyDatabaseFromSQLiteTo($fromPath, $to);
     }
 
-    function ensureDir( $env )
+    function ensureDir($env)
     {
         is_dir($env['dir']) ?: mkdir($env['dir'], 01770, true); // ensure existence 
     }
-    
+
     function copyDatabaseFromSQLiteTo($fromPath, $to)
     {
-         
-        $this->ensureDir( $to );
+
+        $this->ensureDir($to);
         copy($fromPath, $to['dir'] . DIRECTORY_SEPARATOR . $to['name'] . $this->fileExt($to));
     }
 
@@ -69,5 +69,22 @@ class Helper_sqlite
     function per_table($env, $scopeKey)
     {
         $env['table_prefix'] = "{$scopeKey}_";
+    }
+
+    function initializePDO($pdo)
+    {
+        if ($pdo) {
+
+            $pdo->sqliteCreateFunction('regexp',
+                    function ($pattern, $data, $delimiter = '~', $modifiers = 'isuS') {
+                if (isset($pattern, $data) === true) {
+                    return (preg_match(sprintf('%1$s%2$s%1$s%3$s', $delimiter, $pattern, $modifiers), $data) > 0);
+                }
+
+                return null;
+            }
+            );
+        }
+        return $pdo;
     }
 }

@@ -58,5 +58,11 @@ class Helper_mysql
 
     function ensureDir($env)
     {
+        
+    }
+
+    function initializePDO($pdo)
+    {
+        return $pdo;
     }
 }

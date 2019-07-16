@@ -70,20 +70,17 @@ class Environment extends \ArrayObject
      */
     function which($optionKey, $whichKey = 'which')
     {
+        if (!isset($this[$whichKey][$optionKey])) return $this;
+
         $clone = clone $this;
-
-        if (isset($clone[$whichKey][$optionKey])) {
-            foreach (($clone[$whichKey][$optionKey]) as $key => $value) {
-                if (is_array($value) && isset($clone[$key])) {
-
-                    foreach ($value as $key2 => $value2) {
-                        $clone[$key][$key2] = $value2;
-                    }
-                } else $clone[$key] = $value;
-            }
-            $clone[$whichKey] = $optionKey;
+        foreach (($this[$whichKey][$optionKey]) as $key => $value) {
+            if (is_array($value) && isset($clone[$key])) {
+                foreach ($value as $key2 => $value2) {
+                    $clone[$key][$key2] = $value2;
+                }
+            } else $clone[$key] = $value;
         }
-
+        $clone[$whichKey] = $optionKey;
         return $clone;
     }
 

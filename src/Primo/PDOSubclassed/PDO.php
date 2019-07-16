@@ -52,7 +52,9 @@ class PDO extends \PDO
         $options = array_replace($this->defaultOptions(), $options);
 
         //**/ echo "DSN: $dsn options:", json_encode($options) , "\n";
-        parent::__construct($dsn, $username, $password, $options); //**/ echo $dsn;
+        $pdo = parent::__construct($dsn, $username, $password, $options); //**/ echo $dsn;
+        
+        return $this->helper->initializePDO( $pdo );
     }
 
     function defaultOptions()
@@ -84,9 +86,11 @@ class PDO extends \PDO
         // handle ("sql with :name", [':name' => 'val'])
         // handle ("sql with :name", ['name' => 'val'])
         $args = is_array($args[0]) ? array_merge(...$args) : $args;
-
+        
         $success = $stmt->execute($args);
 
+        //error_log( $success ? 'OK' : 'FAIL');
+        
         return $stmt;
     }
 
