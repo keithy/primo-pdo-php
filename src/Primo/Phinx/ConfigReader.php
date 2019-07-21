@@ -110,6 +110,7 @@ class ConfigReader
          * (if 'name' is not an absolute path.
          */
         if (!isset($env['dir'])) $env['dir'] = dirname($this->path);
+        if (!isset($env['database'])) $env['database'] = $env['name'];
 
         return $env;
     }

@@ -17,7 +17,7 @@ namespace fixture {
 
 namespace ok {
 
-    EXPECT("asking for columnNamesOfTable('user'");
+    EXPECT("asking for columnNamesOfTable('user')");
 
     $data = $pdo->columnsOfTable("user");
 

@@ -3,10 +3,13 @@
 namespace Primo\PDOSubclassed;
 
 use Primo\PDOLog\LogsTrait;
+use Primo\PDOSubclassed\CacheTrait;
 
 class PDO extends \PDO
 {
     use LogsTrait;
+    use CacheTrait;
+    
     public $helper;
 
     static function helperFor($env)
@@ -33,11 +36,9 @@ class PDO extends \PDO
 
     function __construct($env, $options = [])
     {
-        // 'database' (in $env or $options) overrides 'name'
-        if (!isset($env['database'])) {
-            if (isset($options['database'])) $env['database'] = $options['database'];
-            else $env['database'] = $env['name'];
-        }
+        // 'database' (in $options or $env) overrides 'name'
+        if (isset($options['database'])) $env['database'] = $options['database'];  
+        if (!isset($env['database'])) $env['database'] = $env['name'];
 
         if (!isset($env['logging'])) $env['logging'] = true;
         $this->addLog($env['logging'], $env['database']);
@@ -112,6 +113,12 @@ class PDO extends \PDO
     function columnsOfTable($tableName)
     {
         return $this->helper->columnsOfTable($this, $tableName);
+    }
+    
+    // identifies this specific database (for use as a cache key)
+    function databaseIdentifier( $env )
+    {
+        return $this->helper->databaseIdentifier( $env );
     }
 }
 

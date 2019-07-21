@@ -10,7 +10,13 @@ class Helper_sqlite
 
     function dsn($env)
     {
-        return is_string($env) ? $env : 'sqlite:' . $env['dir'] . DIRECTORY_SEPARATOR . $env['database'] . '.sqlite3';
+        return is_string($env) ? $env : 'sqlite:' . $this->databasePath($env);
+    }
+
+    // identifies this specific database (for use as a cache key)
+    function databaseIdentifier($env)
+    {
+        return $this->databasePath($env);
     }
 
     function CONCAT($list)
@@ -30,17 +36,29 @@ class Helper_sqlite
 
     function clobberDatabase($env)
     {
-        return array_map('unlink', glob($env['dir'] . DIRECTORY_SEPARATOR . $env['name'] . $this->fileExt($env)));
+        return array_map('unlink', glob($this->databasePath($env)));
     }
 
-    function databaseExists($env)
+    function databasePath($env)
     {
-        return file_exists($env['dir'] . DIRECTORY_SEPARATOR . $env['name'] . $this->fileExt($env));
+        return $env['dir'] . DIRECTORY_SEPARATOR . $env['database'] . $this->fileExt($env);
+    }
+
+    // dont count if the file exists but is empty
+    function hasBeenInitialized($env)
+    {
+        $exists = true;
+        $path = $this->databasePath($env);
+        if ($fp = @fopen($path, 'rb')) {
+            if (false === fgetc($fp)) $exists = false;
+            fclose($fp);
+        } else $exists = false;
+        return $exists;
     }
 
     function copyDatabase($from, $to)
     {
-        $fromPath = $from['dir'] . DIRECTORY_SEPARATOR . $from['name'] . $this->fileExt($from);
+        $fromPath = $this->databasePath($from);
         PDO::helperFor($to)->copyDatabaseFromSQLiteTo($fromPath, $to);
     }
 
@@ -53,7 +71,9 @@ class Helper_sqlite
     {
 
         $this->ensureDir($to);
-        copy($fromPath, $to['dir'] . DIRECTORY_SEPARATOR . $to['name'] . $this->fileExt($to));
+        $toPath = $this->databasePath($to);
+        array_map('unlink', glob($toPath));
+        copy($fromPath, $toPath);
     }
 
     function copyDatabaseFromMySqlTo($from, $to)
@@ -61,15 +81,15 @@ class Helper_sqlite
         /* left as an excercise for the reader */
     }
 
-    function per_db($env, $scopeKey)
-    {
-        $env['name'] = $env['name'] . "_$scopeKey";
-    }
-
-    function per_table($env, $scopeKey)
-    {
-        $env['table_prefix'] = "{$scopeKey}_";
-    }
+//    function per_db($env, $scopeKey)
+//    {
+//        $env['database'] = $env['database'] . "_$scopeKey";
+//    }
+//
+//    function per_table($env, $scopeKey)
+//    {
+//        $env['table_prefix'] = "{$scopeKey}_";
+//    }
 
     function initializePDO($pdo)
     {

@@ -20,10 +20,14 @@ use Phinx\Migration\Manager;
 
 class Environment extends \ArrayObject
 {
-
+    function databaseIdentifier()
+    {
+         return PDO::helperFor($this)->databaseIdentifier($this);
+    }
+    
     function exists()
     {
-        return PDO::helperFor($this)->databaseExists($this);
+        return PDO::helperFor($this)->hasBeenInitialized($this);
     }
 
     function clobber($areYouSure)
@@ -38,9 +42,9 @@ class Environment extends \ArrayObject
         return $to;
     }
 
-    function migrate()
+    function migrate( $exists = null) // if we already know $exists pass it in
     {
-        $exists = $this->exists(); // test now, it will already be created by the next lines
+        if (!isset($exists)) $exists = $this->exists(); // test now, it will already be created by the next lines
 
         if (!$exists) PDO::helperFor($this)->ensureDir($this);
 
@@ -53,7 +57,9 @@ class Environment extends \ArrayObject
 
     function create($fromScratch = true)
     {
-        $this->clobber($fromScratch)->migrate();
+        // if clobber is requested, we know $exists will be false.
+        $exists = $fromScratch ? false : null;
+        $this->clobber($fromScratch)->migrate( $exists );
 
         return $this;
     }
@@ -117,4 +123,5 @@ class Environment extends \ArrayObject
     {
         return new PDO($this, $options);
     }
+ 
 }

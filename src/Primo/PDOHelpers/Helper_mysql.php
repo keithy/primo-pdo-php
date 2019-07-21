@@ -2,7 +2,6 @@
 
 namespace Primo\PDOHelpers;
 
-use Primo\PDOSubclassed\PDO;
 use \Primo\PDOSubclassed\PDO;
 
 class Helper_mysql
@@ -19,6 +18,12 @@ class Helper_mysql
 
         return $dsn;
     }
+    
+    // identifies this specific database (for use as a cache key)
+    function databaseIdentifier($env)
+    {
+        return $env['host'] . ($env['port'] ?? ''). $env['database'] ;
+    }
 
     function CONCAT($list)
     {
@@ -33,7 +38,7 @@ class Helper_mysql
     function clobberDatabase($env)
     {
         $pdo = new PDO($env, [database => ""]);
-        return $pdo->query("DROP DATABASE {$env['name']}");
+        return $pdo->query("DROP DATABASE {$env['database']}");
     }
 
     function copyDatabase($from, $to)
@@ -53,7 +58,7 @@ class Helper_mysql
 
     function switch($env, $pathsKey)
     {
-        $env['name'] = $env['name'] . '_' . $optionsKey;
+        $env['database'] = $env['database'] . '_' . $optionsKey;
     }
 
     function ensureDir($env)
